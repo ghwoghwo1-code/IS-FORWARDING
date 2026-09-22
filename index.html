@@ -1025,23 +1025,58 @@
         });
     }
 
-    function editItem(index) {
-        let data = getStoredData();
-        const item = data[index];
+// 1. 수정 모드로 전환하는 함수 (행 내부를 input으로 변경)
+function editItem(index) {
+    let data = getStoredData();
+    const item = data[index];
+    
+    // 해당 행(tr)을 찾아옵니다. (테이블의 각 행에 id나 구별자가 있다고 가정, 혹은 tbody 내 index 기준 접근)
+    const row = document.getElementById(`row-${index}`);
+    if (!row) return;
 
-        document.getElementById('editIndex').value = index;
-        document.getElementById('newClientName').value = item.client;
-        document.getElementById('newPol').value = item.pol;
-        document.getElementById('newPod').value = item.pod;
-        document.getElementById('newOf20').value = item.of20;
-        document.getElementById('newOf40').value = item.of40;
+    // 각 셀의 내용을 입력 가능한 input 태그로 교체합니다.
+    row.innerHTML = `
+        <td>${row.cells[0].innerText}</td> <!-- 순서 드래그 핸들 등 유지 -->
+        <td><input type="text" id="edit-category-${index}" value="${item.category}" class="form-control form-control-sm"></td>
+        <td><input type="text" id="edit-name-${index}" value="${item.name}" class="form-control form-control-sm"></td>
+        <td>
+            <select id="edit-currency-${index}" class="form-control form-control-sm">
+                <option value="KRW" ${item.currency === 'KRW' ? 'selected' : ''}>KRW</option>
+                <option value="USD" ${item.currency === 'USD' ? 'selected' : ''}>USD</option>
+            </select>
+        </td>
+        <td><input type="number" id="edit-of20-${index}" value="${item.of20}" class="form-control form-control-sm"></td>
+        <td><input type="number" id="edit-of40-${index}" value="${item.of40}" class="form-control form-control-sm"></td>
+        <td>
+            <button class="btn btn-success btn-sm" onclick="saveItem(${index})">저장</button>
+            <button class="btn btn-secondary btn-sm" onclick="cancelEdit()">취소</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteItem(${index})">삭제</button>
+        </td>
+    `;
+}
 
-        document.getElementById('formTitle').innerText = "거래처 및 운임 정보 수정";
-        document.getElementById('saveBtn').innerText = "수정 완료 저장";
-        document.getElementById('cancelEditBtn').style.display = 'inline-block';
+// 2. 수정된 내용을 저장하는 함수
+function saveItem(index) {
+    let data = getStoredData();
 
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+    // 입력된 값을 가져와서 데이터 객체 업데이트
+    data[index].category = document.getElementById(`edit-category-${index}`).value;
+    data[index].name = document.getElementById(`edit-name-${index}`).value;
+    data[index].currency = document.getElementById(`edit-currency-${index}`).value;
+    data[index].of20 = document.getElementById(`edit-of20-${index}`).value;
+    data[index].of40 = document.getElementById(`edit-of40-${index}`).value;
+
+    // 로컬 스토리지 또는 상태 저장 함수 호출
+    saveStoredData(data);
+
+    // 테이블 다시 그리기
+    renderTable(); 
+}
+
+// 3. 수정 취소 함수 (단순히 테이블 다시 렌더링)
+function cancelEdit() {
+    renderTable();
+}
 
     function cancelEdit() {
         document.getElementById('editIndex').value = -1;
